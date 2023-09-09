@@ -1,19 +1,20 @@
 const express = require("express");
 const router = express.Router();
-const { User, Document } = require("../models/User");
+const User= require("../models/User");
+const Document = require("../models/Document")
 
 // New document
 router.post("/create", async (req, res) => {
   try {
-    const userId = req.user.id;
+    const {userID} = req.body;
     const newDocument = new Document({
-      createdBy: userId,
-      title: req.body.title,
-      content: req.body.content
+      createdBy: userID,
+      title: "New Document",
+      content: "",
     });
     await newDocument.save();
 
-    await User.findByIdAndUpdate(userId, {
+    await User.findByIdAndUpdate(userID, {
       $push: { documents: newDocument._id },
     });
 
@@ -27,7 +28,7 @@ router.post("/create", async (req, res) => {
 // fetch doc by id
 router.get('/:documentId', async (req, res) => {
   try {
-    const document = await Document.findById(req.params.documentId);
+    const document = await Document.findById(req.params.documentId).populate("createdBy");
 
     if (!document) {
       res.status(404).json({ error: 'Document not found' });
@@ -42,20 +43,38 @@ router.get('/:documentId', async (req, res) => {
 });
 
 // fetch doc by a specific user
-router.get('/user/:userId', async (req, res) => {
+router.get("/user/:userId", async (req, res) => {
   try {
     const userId = req.params.userId;
-    const documents = await Document.find({ createdBy: userId });
-
-    if (!documents || documents.length === 0) {
-      res.status(404).json({ error: 'No documents found for this user' });
-      return;
+    const user = await User.findById(userId).populate('documents');
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json(documents);
+    const userDocuments = user.documents;
+    res.status(200).json(userDocuments);
   } catch (error) {
-    console.error('Error fetching documents by user ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error retrieving user documents:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.put("/:id", async (req, res) => {
+  try {
+    const documentId = req.params.id;
+    const { title, content } = req.body;
+    const document = await Document.findById(documentId);
+    if (!document) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+    document.title = title || document.title;
+    document.content = content || document.content;
+
+    await document.save();
+    res.status(200).json(document);
+  } catch (error) {
+    console.error("Error updating document:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

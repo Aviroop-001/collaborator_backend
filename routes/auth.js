@@ -24,7 +24,7 @@ router.post("/login", async (req, res) => {
   const currUsername = req.body.username;
   const currPassword = req.body.password;
   try {
-    const user = await User.findOne({ username: currUsername }).exec();
+    const user = await User.findOne({ username: currUsername }).populate("documents");;
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
