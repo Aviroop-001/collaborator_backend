@@ -4,6 +4,9 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 
+const authRoute = require("./routes/auth");
+const documentRoutes = require("./routes/documents");
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -19,8 +22,8 @@ mongoose
     console.log("log error ~~", err);
   });
 
-// app.use("/api", compileRouter);
-// app.use("/api/share", shareCodeRouter);
+app.use("/api/auth", authRoute);
+app.use("/api/document", documentRoutes);
 
 app.get("/", (req, res) => {
   try {
