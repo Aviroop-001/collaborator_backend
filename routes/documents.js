@@ -10,7 +10,7 @@ router.post("/create", async (req, res) => {
     const newDocument = new Document({
       createdBy: userID,
       title: "New Document",
-      content: "",
+      content: "<b>Enjoy your new document ;)</b>",
     });
     await newDocument.save();
 
@@ -59,6 +59,7 @@ router.get("/user/:userId", async (req, res) => {
   }
 });
 
+// update doc
 router.put("/:id", async (req, res) => {
   try {
     const documentId = req.params.id;
@@ -74,6 +75,22 @@ router.put("/:id", async (req, res) => {
     res.status(200).json(document);
   } catch (error) {
     console.error("Error updating document:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//delete doc
+router.delete("/:docID", async (req, res) => {
+  try {
+    const { docID } = req.params;
+    const document = await Document.findById(docID);
+    if (!document) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+    await Document.findByIdAndDelete(docID);
+    res.status(200).json({ message: "Document deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting document:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
