@@ -16,7 +16,7 @@ const server = http.createServer(app);
 // const io = new Server(server);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://collab-io-lovat.vercel.app/",
     methods: ["GET", "POST"],
   },
 });
