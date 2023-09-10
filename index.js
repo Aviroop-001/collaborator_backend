@@ -68,9 +68,13 @@ io.on("connection", (socket) => {
     socket.emit("active-users", Array.from(activeUsers));
 
     socket.on("send-changes", (delta) => {
-      socket.broadcast.to(documentId).emit("receive-changes", delta);
+      socket.broadcast.to(documentId).emit("receive-changes", delta.ops);
+
+      const activeUserId = delta.attributes.author;
+      socket.to(documentId).emit("highlight-user", activeUserId);
     });
 
+    //autosave
     socket.on("save-document", async (data) => {
       await Document.findByIdAndUpdate(documentId, {
         title: data.title,
@@ -78,6 +82,7 @@ io.on("connection", (socket) => {
       });
     });
 
+    // as user leaves the doc
     socket.on("disconnect", () => {
       socket.to(documentId).emit("user-left", username);
 
