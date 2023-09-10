@@ -9,8 +9,7 @@ router.post("/create", async (req, res) => {
     const {userID} = req.body;
     const newDocument = new Document({
       createdBy: userID,
-      title: "New Document",
-      content: "<b>Enjoy your new document ;)</b>",
+      title: "New Document"
     });
     await newDocument.save();
 
@@ -63,18 +62,17 @@ router.get("/user/:userId", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const documentId = req.params.id;
-    const { title, content } = req.body;
+    const { title } = req.body;
     const document = await Document.findById(documentId);
     if (!document) {
       return res.status(404).json({ error: "Document not found" });
     }
     document.title = title || document.title;
-    document.content = content || document.content;
 
     await document.save();
     res.status(200).json(document);
   } catch (error) {
-    console.error("Error updating document:", error);
+    console.error("Error updating title:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
