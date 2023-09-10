@@ -50,11 +50,22 @@ app.get("/", (req, res) => {
 //   console.log("Backend is up and running...");
 // });
 
+const activeUsersByRoom = new Map();
+
 io.on("connection", (socket) => {
+  const { username } = socket.handshake.query;
+
   socket.on("get-document", async (documentId) => {
     const document = await findDocument(documentId);
     socket.join(documentId);
     socket.emit("load-document", document);
+
+    socket.to(documentId).emit("user-joined", username);
+
+    const activeUsers = activeUsersByRoom.get(documentId) || new Set();
+    activeUsers.add(username);
+    activeUsersByRoom.set(documentId, activeUsers);
+    socket.emit("active-users", Array.from(activeUsers));
 
     socket.on("send-changes", (delta) => {
       socket.broadcast.to(documentId).emit("receive-changes", delta);
@@ -65,6 +76,21 @@ io.on("connection", (socket) => {
         title: data.title,
         content: data.content,
       });
+    });
+
+    socket.on("disconnect", () => {
+      socket.to(documentId).emit("user-left", username);
+
+      const activeUsers = activeUsersByRoom.get(documentId);
+      if (activeUsers) {
+        activeUsers.delete(username);
+        if (activeUsers.size === 0) {
+          // No active users left, remove the room from the map
+          activeUsersByRoom.delete(documentId);
+        } else {
+          activeUsersByRoom.set(documentId, activeUsers);
+        }
+      }
     });
   });
 });
